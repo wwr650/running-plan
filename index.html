@@ -1,410 +1,252 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
-
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RunningPlan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .last-updated {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .last-updated strong {
+            color: #4f46e5;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            background: #f8fafc;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #4f46e5;
+        }
+
+        .file-link {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            background: #4f46e5;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #1f2937;
+        }
+
+        .file-link:hover .file-name {
+            color: #4f46e5;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            opacity: 0.6;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-<style>
-    table,
-    th,
-    td {
-        border: 1px solid black;
-    }
-</style>
-
 <body>
-
-    <hr>
-    <h3><strong>训练说明</strong></h3>
-    <ol>
-        <li><strong>关键指标</strong>：
-            <ul>
-                <li><strong>目标配速</strong>：4'00/km</li>
-                <li><strong>心率区间</strong>（基于最大心率）：
-                    <ul>
-                        <li>Zone 2（有氧）：60-70%</li>
-                        <li>Zone 4（阈值）：80-90%</li>
-                        <li>Zone 5（间歇）：90-100%</li>
-                    </ul>
+    <div class="container">
+        <div class="header">
+            <h1>📁 RunningPlan</h1>
+            <p>点击下面的文件链接查看对应页面</p>
+        </div>
+        
+        <div class="content">
+            <div class="last-updated">
+                <strong>最后更新:</strong> <span id="lastUpdated">加载中...</span>
+            </div>
+            
+            <ul class="file-list" id="fileList">
+                <li class="file-item loading">
+                    <div class="file-link">
+                        <div class="file-icon">H</div>
+                        <div class="file-name">加载中...</div>
+                    </div>
                 </li>
             </ul>
-        </li>
-        <ul>
-            <li><strong>自定义心率区间</strong>（基于最大心率=190 bpm）： <table>
-                    <thead>
-                        <tr>
-                            <th>区间</th>
-                            <th>心率范围 (bpm)</th>
-                            <th>训练效果</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Zone 1</td>
-                            <td>95-114</td>
-                            <td>恢复/热身</td>
-                        </tr>
-                        <tr>
-                            <td>Zone 2</td>
-                            <td>114-133</td>
-                            <td>有氧耐力（燃脂）</td>
-                        </tr>
-                        <tr>
-                            <td>Zone 3</td>
-                            <td>133-152</td>
-                            <td>有氧动力</td>
-                        </tr>
-                        <tr>
-                            <td>Zone 4</td>
-                            <td>152-171</td>
-                            <td>无氧阈值</td>
-                        </tr>
-                        <tr>
-                            <td>Zone 5</td>
-                            <td>&gt;171</td>
-                            <td>极限强度</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </li>
-        </ul>
+        </div>
+    </div>
 
-        <li><strong>符号解释</strong>：
-            <ul>
-                <li>★：重点强度课</li>
-                <li>▲：次重点课</li>
-                <li>✚：力量训练（下肢+核心）</li>
-            </ul>
-        </li>
-    </ol>
-    <hr>
-    <h3><strong>8周详细课表</strong></h3>
-    <h4><strong>第1-2周（基础期）</strong></h4>
-    <p><strong>目标</strong>：建立有氧基础，提升乳酸耐受</p>
+    <script>
+        // 获取仓库信息和文件列表
+        async function loadFiles() {
+            try {
+                // 获取仓库信息
+                const repoResponse = await fetch('https://api.github.com/repos/wwr650/running-plan');
+                const repoData = await repoResponse.json();
+                
+                // 更新最后更新时间
+                const lastUpdated = new Date(repoData.updated_at).toLocaleString('zh-CN');
+                document.getElementById('lastUpdated').textContent = lastUpdated;
+                
+                // 获取文件列表
+                const filesResponse = await fetch('https://api.github.com/repos/wwr650/running-plan/contents/');
+                const filesData = await filesResponse.json();
+                
+                // 过滤出 HTML 文件（排除 index.html）
+                const htmlFiles = filesData.filter(file => 
+                    file.name.endsWith('.html') && 
+                    file.name !== 'index.html' &&
+                    file.type === 'file'
+                );
+                
+                displayFiles(htmlFiles);
+                
+            } catch (error) {
+                console.error('加载文件时出错:', error);
+                document.getElementById('fileList').innerHTML = `
+                    <div class="empty-state">
+                        <p>❌ 加载文件列表时出错</p>
+                        <p>请检查控制台获取详细信息</p>
+                    </div>
+                `;
+                document.getElementById('lastUpdated').textContent = '加载失败';
+            }
+        }
 
-    <table>
-        <thead>
-            <tr>
-                <th><strong>星期</strong></th>
-                <th><strong>训练内容</strong></th>
-                <th><strong>强度</strong></th>
-                <th><strong>科学原理</strong></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>周一</td>
-                <td>8km 有氧跑 @5'30-6'00/km + 6×100m 冲刺（组间步行返回）</td>
-                <td>Zone 2-3</td>
-                <td>毛细血管增生，神经肌肉激活</td>
-            </tr>
-            <tr>
-                <td><strong>周二★</strong></td>
-                <td><strong>间歇跑</strong>：5×1000m @4'05-4'10/km（组间400m慢跑恢复）</td>
-                <td>Zone 4-5</td>
-                <td>提升乳酸阈值</td>
-            </tr>
-            <tr>
-                <td>周三</td>
-                <td>交叉训练（游泳/骑行45min）或休息</td>
-                <td>-</td>
-                <td>主动恢复</td>
-            </tr>
-            <tr>
-                <td><strong>周四▲</strong></td>
-                <td><strong>法莱克跑</strong>：30min变速（1min快@3'50/km + 1min慢@5'30/km交替）</td>
-                <td>Zone 3-4</td>
-                <td>增强速度感知</td>
-            </tr>
-            <tr>
-                <td>周五</td>
-                <td>10km LSD @5'20-5'40/km</td>
-                <td>Zone 2</td>
-                <td>有氧耐力储备</td>
-            </tr>
-            <tr>
-                <td>周六</td>
-                <td>完全休息</td>
-                <td>-</td>
-                <td>超量恢复</td>
-            </tr>
-            <tr>
-                <td>周日</td>
-                <td>6km 有氧跑 @5'30/km + ✚（深蹲3×12+平板支撑3×1min）</td>
-                <td>Zone 2</td>
-                <td>基础力量强化</td>
-            </tr>
-        </tbody>
-    </table>
-    <hr>
-    <h4><strong>第3-4周（强化期）</strong></h4>
-    <p><strong>目标</strong>：提升VO₂max，增强速度耐力</p>
+        // 显示文件列表
+        function displayFiles(files) {
+            const fileList = document.getElementById('fileList');
+            
+            if (files.length === 0) {
+                fileList.innerHTML = `
+                    <div class="empty-state">
+                        <p>📝 暂无 HTML 文件</p>
+                        <p>添加 .html 文件到仓库后会自动显示在这里</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            fileList.innerHTML = files.map(file => `
+                <li class="file-item fade-in">
+                    <a href="${file.name}" class="file-link" target="_blank">
+                        <div class="file-icon">H</div>
+                        <div class="file-name">${file.name.replace('.html', '')}</div>
+                    </a>
+                </li>
+            `).join('');
+        }
 
-    <table>
-        <thead>
-            <tr>
-                <th><strong>星期</strong></th>
-                <th><strong>训练内容</strong></th>
-                <th><strong>强度</strong></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>周一</td>
-                <td>8km 有氧跑 @5'20/km + 8×30s 上坡冲刺（坡度4-6%）</td>
-                <td>Zone 2-5</td>
-            </tr>
-            <tr>
-                <td><strong>周二★</strong></td>
-                <td><strong>间歇跑</strong>：8×800m @3'45-3'50/km（组间400m慢跑）</td>
-                <td>Zone 5</td>
-            </tr>
-            <tr>
-                <td>周三</td>
-                <td>6km 恢复跑 @6'00/km + 瑜伽30min</td>
-                <td>Zone 1-2</td>
-            </tr>
-            <tr>
-                <td><strong>周四▲</strong></td>
-                <td><strong>阈值跑</strong>：3×2000m @4'00-4'05/km（组间3min步行）</td>
-                <td>Zone 4</td>
-            </tr>
-            <tr>
-                <td>周五</td>
-                <td>12km LSD @5'20/km（最后2km @4'50/km）</td>
-                <td>Zone 2-3</td>
-            </tr>
-            <tr>
-                <td>周六</td>
-                <td>完全休息</td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td>周日</td>
-                <td>5km 节奏跑 @4'15/km + ✚（弓步跳3×10+臀桥3×15）</td>
-                <td>Zone 3-4</td>
-            </tr>
-        </tbody>
-    </table>
-    <hr>
-    <h4><strong>第5-6周（巅峰期）</strong></h4>
-    <p><strong>目标</strong>：竞赛配速适应，优化跑步经济性</p>
+        // 页面加载完成后获取文件列表
+        document.addEventListener('DOMContentLoaded', loadFiles);
+    </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th><strong>星期</strong></th>
-            <th><strong>训练内容</strong></th>
-            <th><strong>强度</strong></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>周一</td>
-            <td>6km 有氧跑 @5'10/km + 动态拉伸</td>
-            <td>Zone 2</td>
-        </tr>
-        <tr>
-            <td><strong>周二★</strong></td>
-            <td><strong>间歇跑</strong>：10×400m @3'30-3'35/km（组间200m慢跑）</td>
-            <td>Zone 5</td>
-        </tr>
-        <tr>
-            <td>周三</td>
-            <td>泡沫轴放松 + 核心训练（俄罗斯转体3×20）</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td><strong>周四▲</strong></td>
-            <td><strong>混合训练</strong>：2km热身 + 3×（1km @3'55/km + 500m @5'30/km） + 1km冷身</td>
-            <td>Zone 4-5</td>
-        </tr>
-        <tr>
-            <td>周五</td>
-            <td>10km LSD @5'00/km（模拟比赛配速）</td>
-            <td>Zone 3</td>
-        </tr>
-        <tr>
-            <td>周六</td>
-            <td>完全休息</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>周日</td>
-            <td><strong>5K测试</strong>：全力跑（目标20:30-20:50）</td>
-            <td>Zone 4-5</td>
-        </tr>
-    </tbody>
-</table>
-<hr>
-<h4><strong>第7-8周（调整期）</strong></h4>
-<p><strong>目标</strong>：减量恢复，竞技状态峰值</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table>
-    <thead>
-        <tr>
-            <th><strong>星期</strong></th>
-            <th><strong>训练内容</strong></th>
-            <th><strong>强度</strong></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>周一</td>
-            <td>5km 放松跑 @5'30/km</td>
-            <td>Zone 1-2</td>
-        </tr>
-        <tr>
-            <td><strong>周二★</strong></td>
-            <td><strong>短间歇</strong>：6×400m @3'25-3'30/km（组间200m步行）</td>
-            <td>Zone 5</td>
-        </tr>
-        <tr>
-            <td>周三</td>
-            <td>游泳30min</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td><strong>周四▲</strong></td>
-            <td><strong>法莱克跑</strong>：20min自由变速（结合路灯/树木标记冲刺）</td>
-            <td>Zone 3-4</td>
-        </tr>
-        <tr>
-            <td>周五</td>
-            <td>8km @5'00/km（最后1km @4'30/km）</td>
-            <td>Zone 2-3</td>
-        </tr>
-        <tr>
-            <td>周六</td>
-            <td>完全休息</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>周日</td>
-            <td><strong>正式5K比赛</strong>（目标19:50-20:00）</td>
-            <td>Zone 5</td>
-        </tr>
-    </tbody>
-</table>
-<hr>
-<h3><strong>关键注意事项</strong></h3>
-<ol>
-    <li><strong>强度控制</strong>：
-        <ul>
-            <li>间歇跑配速误差需≤3秒/km（如3'30/km不能慢于3'33/km）。</li>
-        </ul>
-    </li>
-    <li><strong>恢复监测</strong>：
-        <ul>
-            <li>晨脉＞平时5次/分 → 当日改为轻松跑。</li>
-        </ul>
-    </li>
-    <li><strong>营养补充</strong>：
-        <ul>
-            <li>强度课后30分钟内补充碳水:蛋白=3:1（如香蕉+乳清蛋白）。</li>
-        </ul>
-    </li>
-</ol>
-<hr>
-<h3><strong>预期进步曲线</strong></h3>
-<ul>
-    <li><strong>第4周</strong>：5K测试可达20:30-20:50（配速4'06-4'10/km）</li>
-    <li><strong>第8周</strong>：突破20分钟需满足：
-        <ul>
-            <li>最后400米能冲刺至3'20/km</li>
-            <li>10×400m间歇平均配速≤3'33/km</li>
-        </ul>
-    </li>
-</ul>
-<p>执行此方案时，建议使用运动手表监测实时配速和心率，确保训练精准性。</p>
