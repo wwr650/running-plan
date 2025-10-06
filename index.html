@@ -93,7 +93,6 @@
             width: 24px;
             height: 24px;
             margin-right: 15px;
-            background: #4f46e5;
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -101,6 +100,14 @@
             color: white;
             font-weight: bold;
             font-size: 12px;
+        }
+
+        .file-icon.html {
+            background: #4f46e5;
+        }
+
+        .file-icon.md {
+            background: #10b981;
         }
 
         .file-name {
@@ -200,14 +207,14 @@
                 const filesResponse = await fetch('https://api.github.com/repos/wwr650/running-plan/contents/');
                 const filesData = await filesResponse.json();
                 
-                // 过滤出 HTML 文件（排除 index.html）
-                const htmlFiles = filesData.filter(file => 
-                    file.name.endsWith('.html') && 
+                // 过滤出 HTML 和 Markdown 文件（排除 index.html）
+                const supportedFiles = filesData.filter(file => 
+                    (file.name.endsWith('.html') || file.name.endsWith('.md')) && 
                     file.name !== 'index.html' &&
                     file.type === 'file'
                 );
                 
-                displayFiles(htmlFiles);
+                displayFiles(supportedFiles);
                 
             } catch (error) {
                 console.error('加载文件时出错:', error);
@@ -228,21 +235,41 @@
             if (files.length === 0) {
                 fileList.innerHTML = `
                     <div class="empty-state">
-                        <p>📝 暂无 HTML 文件</p>
-                        <p>添加 .html 文件到仓库后会自动显示在这里</p>
+                        <p>📝 暂无文件</p>
+                        <p>添加 .html 或 .md 文件到仓库后会自动显示在这里</p>
                     </div>
                 `;
                 return;
             }
             
-            fileList.innerHTML = files.map(file => `
+            fileList.innerHTML = files.map(file => {
+                const isHTML = file.name.endsWith('.html');
+                const isMD = file.name.endsWith('.md');
+                let iconClass = '';
+                let iconText = '';
+                
+                if (isHTML) {
+                    iconClass = 'html';
+                    iconText = 'H';
+                } else if (isMD) {
+                    iconClass = 'md';
+                    iconText = 'M';
+                }
+                
+                // 对于 Markdown 文件，使用 GitHub 的原始内容链接
+                const fileUrl = isMD 
+                    ? `https://raw.githubusercontent.com/wwr650/running-plan/main/${file.name}`
+                    : file.name;
+                
+                return `
                 <li class="file-item fade-in">
-                    <a href="${file.name}" class="file-link" target="_blank">
-                        <div class="file-icon">H</div>
-                        <div class="file-name">${file.name.replace('.html', '')}</div>
+                    <a href="${fileUrl}" class="file-link" target="_blank">
+                        <div class="file-icon ${iconClass}">${iconText}</div>
+                        <div class="file-name">${file.name.replace('.html', '').replace('.md', '')}</div>
                     </a>
                 </li>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // 页面加载完成后获取文件列表
