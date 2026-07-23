@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RunningPlan</title>
-        <!-- 网站图标 -->
+    <title>Running Plan</title>
     <link rel="icon" href="https://pub-21bfc399998f49b3be629ce080154177.r2.dev/favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="https://pub-21bfc399998f49b3be629ce080154177.r2.dev/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" href="https://pub-21bfc399998f49b3be629ce080154177.r2.dev/apple-touch-icon.png">
+    <!-- marked.js 用于渲染 Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -25,7 +26,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -80,16 +81,43 @@
             padding: 30px;
         }
 
-        .last-updated {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 10px;
+        /* 分类筛选栏 */
+        .category-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 25px;
-            border-left: 4px solid #4f46e5;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
-        .last-updated strong {
+        .category-btn {
+            padding: 8px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover {
+            border-color: #4f46e5;
             color: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .category-btn.active {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: white;
+        }
+
+        /* 文件列表 */
+        .file-section {
+            margin-bottom: 25px;
         }
 
         .file-list {
@@ -98,10 +126,11 @@
 
         .file-item {
             background: #f8fafc;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border-radius: 10px;
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            cursor: pointer;
         }
 
         .file-item:hover {
@@ -110,17 +139,22 @@
             border-color: #4f46e5;
         }
 
+        .file-item.active {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
         .file-link {
             display: flex;
             align-items: center;
-            padding: 18px 20px;
+            padding: 14px 20px;
             text-decoration: none;
             color: inherit;
         }
 
         .file-icon {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             margin-right: 15px;
             border-radius: 6px;
             display: flex;
@@ -129,26 +163,149 @@
             color: white;
             font-weight: bold;
             font-size: 12px;
+            flex-shrink: 0;
         }
 
-        .file-icon.html {
-            background: #4f46e5;
-        }
-
-        .file-icon.md {
-            background: #10b981;
-        }
+        .file-icon.md { background: #10b981; }
 
         .file-name {
             font-weight: 600;
-            font-size: 1.1em;
+            font-size: 1.05em;
             color: #1f2937;
         }
 
-        .file-link:hover .file-name {
+        .file-item:hover .file-name {
             color: #4f46e5;
         }
 
+        .file-path {
+            font-size: 0.8em;
+            color: #9ca3af;
+            margin-left: auto;
+            padding-left: 10px;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 30px;
+            min-height: 200px;
+            border: 1px solid #e5e7eb;
+            display: none;
+        }
+
+        .content-area.visible {
+            display: block;
+        }
+
+        .content-area h1,
+        .content-area h2,
+        .content-area h3,
+        .content-area h4 {
+            color: #1f2937;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .content-area h1:first-child,
+        .content-area h2:first-child,
+        .content-area h3:first-child {
+            margin-top: 0;
+        }
+
+        .content-area p {
+            margin-bottom: 1em;
+            color: #374151;
+        }
+
+        .content-area ul,
+        .content-area ol {
+            margin-bottom: 1em;
+            padding-left: 1.5em;
+        }
+
+        .content-area li {
+            margin-bottom: 0.3em;
+            color: #374151;
+        }
+
+        .content-area table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1.5em;
+            font-size: 0.9em;
+        }
+
+        .content-area th,
+        .content-area td {
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .content-area th {
+            background: #4f46e5;
+            color: white;
+            font-weight: 600;
+        }
+
+        .content-area tr:nth-child(even) {
+            background: #f1f5f9;
+        }
+
+        .content-area tr:hover {
+            background: #e0e7ff;
+        }
+
+        .content-area blockquote {
+            border-left: 4px solid #4f46e5;
+            padding: 12px 20px;
+            margin: 1em 0;
+            background: #eef2ff;
+            border-radius: 0 8px 8px 0;
+            color: #374151;
+        }
+
+        .content-area pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 16px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1em;
+            font-size: 0.9em;
+        }
+
+        .content-area code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+
+        .content-area p code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #4f46e5;
+        }
+
+        .content-area hr {
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin: 1.5em 0;
+        }
+
+        .content-area img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 1em 0;
+        }
+
+        .content-area strong {
+            color: #1f2937;
+        }
+
+        /* 空状态和加载 */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -160,27 +317,69 @@
             margin-bottom: 10px;
         }
 
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                border-radius: 10px;
-            }
-            
-            .header {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .content {
-                padding: 20px;
-            }
+        .loading {
+            opacity: 0.6;
+        }
 
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            width: 30px;
+            height: 30px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            display: none;
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .back-btn:hover {
+            border-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .back-btn.visible {
+            display: inline-block;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { border-radius: 10px; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 2em; }
+            .content { padding: 20px; }
             .home-button {
                 position: relative;
                 top: auto;
@@ -190,20 +389,12 @@
                 padding: 6px 12px;
                 font-size: 0.8em;
             }
-        }
-
-        /* 加载动画 */
-        .loading {
-            opacity: 0.6;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            .category-btn { padding: 6px 14px; font-size: 0.85em; }
+            .content-area { padding: 20px; }
+            .content-area table { font-size: 0.8em; }
+            .content-area th,
+            .content-area td { padding: 6px 8px; }
+            .file-path { display: none; }
         }
     </style>
 </head>
@@ -211,109 +402,284 @@
     <div class="container">
         <div class="header">
             <a href="https://wwr650.github.io" class="home-button">🏠 返回主页</a>
-            <h1>📁 RunningPlan</h1>
-            <p>点击下面的文件链接查看对应页面</p>
+            <h1 id="siteTitle">🏃 Running Plan</h1>
+            <p id="siteDescription">选择分类查看训练计划与跑步记录</p>
         </div>
-        
+
         <div class="content">
-            <div class="last-updated">
+            <!-- 分类筛选栏 -->
+            <div class="category-bar" id="categoryBar">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <!-- 返回按钮 -->
+            <button class="back-btn" id="backBtn" onclick="showCategoryList()">← 返回分类列表</button>
+
+            <!-- 文件列表 -->
+            <div class="file-section" id="fileSection"></div>
+
+            <!-- Markdown 渲染内容 -->
+            <div class="content-area" id="contentArea"></div>
+
+            <!-- 最后更新 -->
+            <div id="lastUpdatedSection" style="margin-top: 20px; padding: 12px; background: #f8fafc; border-radius: 10px; border-left: 4px solid #4f46e5;">
                 <strong>最后更新:</strong> <span id="lastUpdated">加载中...</span>
             </div>
-            
-            <ul class="file-list" id="fileList">
-                <li class="file-item loading">
-                    <div class="file-link">
-                        <div class="file-icon">H</div>
-                        <div class="file-name">加载中...</div>
-                    </div>
-                </li>
-            </ul>
         </div>
     </div>
 
     <script>
-        // 获取仓库信息和文件列表
-        async function loadFiles() {
+        const REPO_OWNER = 'wwr650';
+        const REPO_NAME = 'running-plan';
+        const BRANCH = 'main';
+        const POST_DIR = '_post';
+
+        let allMdFiles = [];       // 所有 _post 下的 md 文件
+        let categories = {};       // 按子文件夹分组 { categoryName: [files] }
+        let config = {};           // 配置数据
+        let currentCategory = '';  // 当前选中的分类
+        let activeFileItem = null; // 当前激活的文件项
+
+        // ===================== 初始化 =====================
+        async function init() {
             try {
-                // 获取仓库信息
-                const repoResponse = await fetch('https://api.github.com/repos/wwr650/running-plan');
-                const repoData = await repoResponse.json();
-                
-                // 更新最后更新时间
-                const lastUpdated = new Date(repoData.updated_at).toLocaleString('zh-CN');
-                document.getElementById('lastUpdated').textContent = lastUpdated;
-                
-                // 获取文件列表
-                const filesResponse = await fetch('https://api.github.com/repos/wwr650/running-plan/contents/');
-                const filesData = await filesResponse.json();
-                
-                // 过滤出 HTML 和 Markdown 文件（排除 index.html）
-                const supportedFiles = filesData.filter(file => 
-                    (file.name.endsWith('.html') || file.name.endsWith('.md')) && 
-                    file.name !== 'index.html' &&
-                    file.type === 'file'
-                );
-                
-                displayFiles(supportedFiles);
-                
-            } catch (error) {
-                console.error('加载文件时出错:', error);
-                document.getElementById('fileList').innerHTML = `
-                    <div class="empty-state">
-                        <p>❌ 加载文件列表时出错</p>
-                        <p>请检查控制台获取详细信息</p>
-                    </div>
-                `;
-                document.getElementById('lastUpdated').textContent = '加载失败';
+                await loadConfig();
+                await fetchRepoTree();
+                renderCategoryBar();
+                applyDefaultCategory();
+            } catch (err) {
+                console.error('初始化失败:', err);
+                showError('页面加载失败，请刷新重试');
             }
         }
 
-        // 显示文件列表
-        function displayFiles(files) {
-            const fileList = document.getElementById('fileList');
-            
-            if (files.length === 0) {
-                fileList.innerHTML = `
+        // ===================== 加载配置 =====================
+        async function loadConfig() {
+            try {
+                const resp = await fetch(
+                    `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/config.json`
+                );
+                if (resp.ok) {
+                    config = await resp.json();
+                    if (config.siteTitle) {
+                        document.getElementById('siteTitle').textContent = config.siteTitle;
+                    }
+                    if (config.siteDescription) {
+                        document.getElementById('siteDescription').textContent = config.siteDescription;
+                    }
+                }
+            } catch (e) {
+                console.warn('config.json 加载失败，使用默认配置', e);
+            }
+        }
+
+        // ===================== 获取仓库文件树 =====================
+        async function fetchRepoTree() {
+            const resp = await fetch(
+                `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`
+            );
+            if (!resp.ok) throw new Error(`GitHub API 返回 ${resp.status}`);
+            const data = await resp.json();
+
+            // 更新最后更新时间
+            if (config.lastUpdated) {
+                document.getElementById('lastUpdated').textContent = config.lastUpdated;
+            } else {
+                const repoResp = await fetch(
+                    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`
+                );
+                const repoData = await repoResp.json();
+                document.getElementById('lastUpdated').textContent =
+                    new Date(repoData.updated_at).toLocaleString('zh-CN');
+            }
+
+            // 筛选 _post 下的 md 文件，按子文件夹分组
+            const mdEntries = data.tree.filter(item =>
+                item.type === 'blob' &&
+                item.path.startsWith(POST_DIR + '/') &&
+                item.path.endsWith('.md')
+            );
+
+            allMdFiles = mdEntries.map(item => {
+                const parts = item.path.split('/');
+                const category = parts[1];       // 子文件夹名
+                const fileName = parts.slice(2).join('/'); // 文件名（含子路径）
+                return {
+                    path: item.path,
+                    category: category,
+                    fileName: fileName,
+                    displayName: fileName.replace('.md', ''),
+                    rawUrl: `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${item.path}`
+                };
+            });
+
+            // 按分类分组
+            categories = {};
+            for (const file of allMdFiles) {
+                if (!categories[file.category]) {
+                    categories[file.category] = [];
+                }
+                categories[file.category].push(file);
+            }
+        }
+
+        // ===================== 渲染分类筛选栏 =====================
+        function renderCategoryBar() {
+            const bar = document.getElementById('categoryBar');
+            const categoryNames = Object.keys(categories);
+
+            if (categoryNames.length === 0) {
+                bar.innerHTML = `<div class="empty-state"><p>📂 _post 文件夹中暂无内容</p></div>`;
+                document.getElementById('fileSection').innerHTML = `
                     <div class="empty-state">
                         <p>📝 暂无文件</p>
-                        <p>添加 .html 或 .md 文件到仓库后会自动显示在这里</p>
+                        <p>在 _post 目录下创建子文件夹并添加 .md 文件即可显示</p>
                     </div>
                 `;
                 return;
             }
-            
-            fileList.innerHTML = files.map(file => {
-                const isHTML = file.name.endsWith('.html');
-                const isMD = file.name.endsWith('.md');
-                let iconClass = '';
-                let iconText = '';
-                
-                if (isHTML) {
-                    iconClass = 'html';
-                    iconText = 'H';
-                } else if (isMD) {
-                    iconClass = 'md';
-                    iconText = 'M';
-                }
-                
-                // 对于 Markdown 文件，使用 GitHub 的原始内容链接
-                const fileUrl = isMD 
-                    ? `https://raw.githubusercontent.com/wwr650/running-plan/main/${file.name}`
-                    : file.name;
-                
-                return `
-                <li class="file-item fade-in">
-                    <a href="${fileUrl}" class="file-link" target="_blank">
-                        <div class="file-icon ${iconClass}">${iconText}</div>
-                        <div class="file-name">${file.name.replace('.html', '').replace('.md', '')}</div>
-                    </a>
-                </li>
-                `;
-            }).join('');
+
+            bar.innerHTML = categoryNames.map(name => `
+                <button class="category-btn" data-category="${name}" onclick="selectCategory('${name}')">
+                    📁 ${name}
+                </button>
+            `).join('');
         }
 
-        // 页面加载完成后获取文件列表
-        document.addEventListener('DOMContentLoaded', loadFiles);
+        // ===================== 应用默认分类 =====================
+        function applyDefaultCategory() {
+            const categoryNames = Object.keys(categories);
+            if (categoryNames.length === 0) return;
+
+            // 优先使用配置中的默认分类，否则使用第一个
+            const defaultCat = config.defaultCategory && categories[config.defaultCategory]
+                ? config.defaultCategory
+                : categoryNames[0];
+
+            selectCategory(defaultCat);
+        }
+
+        // ===================== 选择分类 =====================
+        function selectCategory(category) {
+            currentCategory = category;
+            activeFileItem = null;
+
+            // 更新按钮状态
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === category);
+            });
+
+            // 隐藏内容区
+            document.getElementById('contentArea').classList.remove('visible');
+            document.getElementById('backBtn').classList.remove('visible');
+
+            // 渲染文件列表
+            renderFileList(category);
+        }
+
+        // ===================== 渲染文件列表 =====================
+        function renderFileList(category) {
+            const section = document.getElementById('fileSection');
+            const files = categories[category] || [];
+
+            if (files.length === 0) {
+                section.innerHTML = `<div class="empty-state"><p>📝 此分类暂无文件</p></div>`;
+                return;
+            }
+
+            section.innerHTML = `
+                <ul class="file-list fade-in">
+                    ${files.map((file, index) => `
+                        <li class="file-item" data-index="${index}" onclick="selectFile('${category}', ${index}, this)">
+                            <div class="file-link">
+                                <div class="file-icon md">M</div>
+                                <span class="file-name">${file.displayName}</span>
+                                <span class="file-path">${file.category}/${file.fileName}</span>
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+
+        // ===================== 选择文件 =====================
+        async function selectFile(category, index, element) {
+            // 更新激活状态
+            if (activeFileItem) {
+                activeFileItem.classList.remove('active');
+            }
+            element.classList.add('active');
+            activeFileItem = element;
+
+            const file = categories[category][index];
+            const contentArea = document.getElementById('contentArea');
+            const backBtn = document.getElementById('backBtn');
+
+            // 显示加载状态
+            contentArea.innerHTML = `<div class="loading-spinner"></div>`;
+            contentArea.classList.add('visible');
+            backBtn.classList.add('visible');
+
+            // 滚动到内容区
+            contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            try {
+                const resp = await fetch(file.rawUrl);
+                if (!resp.ok) throw new Error(`加载失败: ${resp.status}`);
+                const markdown = await resp.text();
+
+                // 渲染 Markdown
+                renderMarkdown(markdown, contentArea);
+            } catch (err) {
+                console.error('加载文件失败:', err);
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <p>❌ 加载文件失败</p>
+                        <p>${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ===================== 渲染 Markdown =====================
+        function renderMarkdown(markdown, container) {
+            if (typeof marked === 'undefined') {
+                container.innerHTML = `<div class="empty-state"><p>❌ Markdown 渲染库加载失败</p></div>`;
+                return;
+            }
+
+            // 配置 marked
+            marked.setOptions({
+                breaks: true,
+                gfm: true,
+            });
+
+            const html = marked.parse(markdown);
+            container.innerHTML = `<div class="fade-in">${html}</div>`;
+        }
+
+        // ===================== 返回分类列表 =====================
+        function showCategoryList() {
+            document.getElementById('contentArea').classList.remove('visible');
+            document.getElementById('backBtn').classList.remove('visible');
+            if (activeFileItem) {
+                activeFileItem.classList.remove('active');
+                activeFileItem = null;
+            }
+        }
+
+        // ===================== 显示错误 =====================
+        function showError(message) {
+            const section = document.getElementById('fileSection');
+            section.innerHTML = `
+                <div class="empty-state">
+                    <p>❌ ${message}</p>
+                </div>
+            `;
+        }
+
+        // 启动
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
