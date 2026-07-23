@@ -305,6 +305,67 @@
             color: #1f2937;
         }
 
+        /* 文章目录 (TOC) */
+        .toc {
+            background: white;
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+
+        .toc-header {
+            font-size: 1.05em;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-item {
+            margin-bottom: 4px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 5px 10px;
+            color: #374151;
+            text-decoration: none;
+            font-size: 0.92em;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-link:hover {
+            background: #eef2ff;
+            color: #4f46e5;
+            border-left-color: #4f46e5;
+        }
+
+        .toc-level-1 { padding-left: 4px; font-weight: 600; }
+        .toc-level-2 { padding-left: 24px; }
+        .toc-level-3 { padding-left: 44px; font-size: 0.88em; }
+        .toc-level-4 { padding-left: 64px; font-size: 0.85em; color: #6b7280; }
+
+        .content-area h1[id]::before,
+        .content-area h2[id]::before,
+        .content-area h3[id]::before,
+        .content-area h4[id]::before {
+            content: '';
+            display: block;
+            height: 20px;
+            margin-top: -20px;
+            visibility: hidden;
+        }
+
         /* 空状态和加载 */
         .empty-state {
             text-align: center;
@@ -641,21 +702,72 @@
             }
         }
 
-        // ===================== 渲染 Markdown =====================
+        // ===================== 渲染 Markdown（含目录生成）=====================
         function renderMarkdown(markdown, container) {
             if (typeof marked === 'undefined') {
                 container.innerHTML = `<div class="empty-state"><p>❌ Markdown 渲染库加载失败</p></div>`;
                 return;
             }
 
-            // 配置 marked
             marked.setOptions({
                 breaks: true,
                 gfm: true,
             });
 
-            const html = marked.parse(markdown);
-            container.innerHTML = `<div class="fade-in">${html}</div>`;
+            let html = marked.parse(markdown);
+
+            // 为标题添加 ID 并收集目录项
+            const tocItems = [];
+            const idMap = {};
+
+            html = html.replace(/<h([1-6])>(.*?)<\/h\1>/gi, (match, level, content) => {
+                // 去除内部 HTML 标签，获取纯文本
+                const cleanText = content.replace(/<[^>]*>/g, '');
+                // 生成锚点 ID
+                let id = cleanText.toLowerCase()
+                    .replace(/[^\w\u4e00-\u9fff]+/g, '-')
+                    .replace(/^-+|-+$/g, '')
+                    .substring(0, 60) || 'section';
+
+                // 处理重复 ID
+                if (idMap[id]) {
+                    idMap[id]++;
+                    id += `-${idMap[id]}`;
+                } else {
+                    idMap[id] = 1;
+                }
+
+                tocItems.push({ level: parseInt(level), text: cleanText, id });
+                return `<h${level} id="${id}">${content}</h${level}>`;
+            });
+
+            // 构建目录 HTML
+            let tocHtml = '';
+            if (tocItems.length >= 2) {
+                tocHtml = '<div class="toc"><div class="toc-header">📑 目录</div><ul class="toc-list">';
+                tocItems.forEach(item => {
+                    tocHtml += `<li class="toc-item toc-level-${item.level}">
+                        <a href="#${item.id}" class="toc-link">${item.text}</a>
+                    </li>`;
+                });
+                tocHtml += '</ul></div>';
+            }
+
+            container.innerHTML = `<div class="fade-in">${tocHtml}${html}</div>`;
+
+            // 给目录链接添加平滑滚动
+            container.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    const target = document.getElementById(targetId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // 更新 URL hash
+                        history.pushState(null, '', '#' + targetId);
+                    }
+                });
+            });
         }
 
         // ===================== 返回分类列表 =====================
